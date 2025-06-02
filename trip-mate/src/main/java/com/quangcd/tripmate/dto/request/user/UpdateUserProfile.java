@@ -6,16 +6,17 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class CreateUserRequest {
-    @NotBlank(message = "field.required")
+public class UpdateUserProfile {
+
     private String username;
-    @NotBlank(message = "field.required")
-    private String password;
-    @NotBlank(message = "field.required")
+
+    private String oldPassword;
+
+    private String newPassword;
+
     private String email;
-    @NotBlank(message = "field.required")
+
     private String nickname;
 
     private String avatarUrl;
-
 }

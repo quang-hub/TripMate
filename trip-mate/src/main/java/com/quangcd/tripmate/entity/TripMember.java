@@ -19,5 +19,8 @@ public class TripMember extends BaseEntity {
 
     private Long userId;
 
+    @Column(name = "role", columnDefinition = "NVARCHAR(50)")
+    private String role;
+
 }
 

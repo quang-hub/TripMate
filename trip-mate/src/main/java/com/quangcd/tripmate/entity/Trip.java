@@ -20,6 +20,6 @@ public class Trip extends BaseEntity {
     private Date endDate;
     private String description;
     private Long creatorId;
-
+    private String logoUrl;
 }
 
