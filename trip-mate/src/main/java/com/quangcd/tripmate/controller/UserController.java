@@ -9,6 +9,9 @@ import com.quangcd.tripmate.dto.response.UserSearchResponse;
 import com.quangcd.tripmate.entity.User;
 import com.quangcd.tripmate.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Null;
@@ -87,6 +90,12 @@ public class UserController {
     }
 
     @GetMapping("/search")
+    @ApiResponse(
+            responseCode = "200",
+            description = "OK",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = UserSearchResponse.class))
+    )
     public ResponseEntity<?> searchAnotherUser(@RequestParam(required = false) String nickname, HttpSession session) {
         try {
             String username = (String) session.getAttribute("username");

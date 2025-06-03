@@ -1,15 +1,24 @@
 package com.quangcd.tripmate.service.tripmember;
 
 
+import com.quangcd.tripmate.configuration.Translator;
+import com.quangcd.tripmate.constant.Constant;
+import com.quangcd.tripmate.dto.request.tripmember.UpdateTripMemberRole;
+import com.quangcd.tripmate.dto.response.MemberInTripResponse;
 import com.quangcd.tripmate.dto.response.TripMemberResponse;
 import com.quangcd.tripmate.entity.Trip;
 import com.quangcd.tripmate.entity.TripMember;
+import com.quangcd.tripmate.entity.User;
+import com.quangcd.tripmate.exception.ResourceNotFoundException;
 import com.quangcd.tripmate.repository.TripMemberRepository;
 import com.quangcd.tripmate.service.trip.TripService;
+import com.quangcd.tripmate.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,14 +32,16 @@ public class TripMemberServiceImpl implements TripMemberService {
 
     private final TripService tripService;
 
+    private final UserService userService;
+
     @Override
     public List<TripMemberResponse> getTripMembersByUserId(Long userId) {
-        List<TripMember> tripMember = tripMemberRepository.findAllTripMembersByUserIdAndIsDeleted(userId,false);
+        List<TripMember> tripMember = tripMemberRepository.findAllTripMembersByUserIdAndIsDeleted(userId, false);
 
         return tripMember.stream()
                 .map(tm -> {
                     Trip trip = tripService.findById(tm.getTripId());
-                    int memberCount = tripMemberRepository.countByTripIdAndIsDeleted(tm.getTripId(),false);
+                    int memberCount = tripMemberRepository.countByTripIdAndIsDeleted(tm.getTripId(), false);
 
                     return TripMemberResponse.builder()
                             .id(tm.getId())
@@ -41,6 +52,52 @@ public class TripMemberServiceImpl implements TripMemberService {
                             .memberCount(memberCount)
                             .logoUrl(trip.getLogoUrl())
                             .role(tm.getRole())
+                            .build();
+                }).collect(Collectors.toList());
+    }
+
+    @Override
+    public void setAuthoritiesForMember(UpdateTripMemberRole updateTripMemberRole, String username) {
+
+        if (!Constant.ROLE_IN_TRIP.containsKey(updateTripMemberRole.getRole())) {
+            throw new ResourceNotFoundException(
+                    Translator.toLocale("common.resource.not.found", "for role " + updateTripMemberRole.getRole()));
+        }
+
+        User leader = userService.findByUsername(username);
+
+        TripMember leaderMember = tripMemberRepository.findByTripIdAndUserIdAndIsDeleted(
+                updateTripMemberRole.getTripId(), leader.getId(), false)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        Translator.toLocale("tripmember.error.trip.not_found")));
+        if (!leaderMember.getRole().equals("LEADER")) {
+            throw new ResourceNotFoundException(
+                    Translator.toLocale("tripmember.error.role_not_leader", leader.getUsername()));
+        }
+
+        TripMember tagetMember = tripMemberRepository.findByTripIdAndUserIdAndIsDeleted(
+                updateTripMemberRole.getTripId(), updateTripMemberRole.getMemberId(), false)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        Translator.toLocale("tripmember.error.trip_member_not_found")));
+
+        tagetMember.setRole(updateTripMemberRole.getRole());
+        tripMemberRepository.save(tagetMember);
+    }
+
+    @Override
+    public List<MemberInTripResponse> getMemberInTrip(Long tripId) {
+        Trip trip = tripService.findById(tripId);
+
+        List<TripMember> tripMembers = tripMemberRepository.findAllByTripIdAndIsDeleted(tripId, false);
+
+        return tripMembers.stream()
+                .map(tm -> {
+                    User user = userService.findById(tm.getUserId());
+                    return MemberInTripResponse.builder()
+                            .id(tm.getId())
+                            .nickname(user.getNickname())
+                            .role(tm.getRole())
+                            .avatarUrl(user.getAvatarUrl())
                             .build();
                 }).collect(Collectors.toList());
     }

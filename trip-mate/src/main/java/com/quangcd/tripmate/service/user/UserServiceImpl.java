@@ -17,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -29,6 +30,20 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final EmailService emailService;
+
+    @Override
+    public User findByUsername(String username) {
+        return userRepository.findByUsernameAndIsDeleted(username, false)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                    Translator.toLocale("common.resource.not.found", "for user " + username)));
+    }
+
+    @Override
+    public User findById(Long id) {
+        return userRepository.findByIdAndIsDeleted(id, false)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        Translator.toLocale("common.resource.not.found", "for user " + id)));
+    }
 
     @Override
     @Transactional

@@ -1,5 +1,11 @@
 package com.quangcd.tripmate.constant;
 
+import java.util.Map;
+
 public class Constant {
-    String ROLE_IN_TRIP[] = {"LEADER", "MEMBER", "GUEST"};
+    public static final Map<String, String> ROLE_IN_TRIP = Map.of(
+        "LEADER", "LEADER",
+        "GUEST", "GUEST",
+        "MEMBER", "MEMBER"
+    );
 }
