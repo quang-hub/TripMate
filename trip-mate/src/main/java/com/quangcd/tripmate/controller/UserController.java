@@ -6,7 +6,6 @@ import com.quangcd.tripmate.dto.request.user.CreateUserRequest;
 import com.quangcd.tripmate.dto.request.user.UpdateUserProfile;
 import com.quangcd.tripmate.dto.response.BaseResponse;
 import com.quangcd.tripmate.dto.response.UserSearchResponse;
-import com.quangcd.tripmate.entity.User;
 import com.quangcd.tripmate.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -14,12 +13,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Null;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -72,9 +71,10 @@ public class UserController {
     }
 
     @PostMapping("/update-profile")
-    public ResponseEntity<?> updateProfile(@Valid @RequestBody UpdateUserProfile userProfile) {
+    public ResponseEntity<?> updateProfile(@Valid @RequestPart("request") UpdateUserProfile userProfile,
+                                           @RequestPart(value = "file", required = false) MultipartFile file) {
         try {
-            userService.updateUserProfile(userProfile);
+            userService.updateUserProfile(userProfile,file);
             log.info("update successful");
             return ResponseEntity.ok(BaseResponse.builder()
                     .code(200)

@@ -5,6 +5,7 @@ import com.quangcd.tripmate.dto.request.user.CreateUserRequest;
 import com.quangcd.tripmate.dto.request.user.UpdateUserProfile;
 import com.quangcd.tripmate.dto.response.UserSearchResponse;
 import com.quangcd.tripmate.entity.User;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +19,7 @@ public interface UserService {
 
     void login(UserDto user);
 
-    void updateUserProfile(UpdateUserProfile userProfile);
+    void updateUserProfile(UpdateUserProfile userProfile, MultipartFile file);
 
     List<UserSearchResponse> findExceptUsername(String nickname, String username);
 }

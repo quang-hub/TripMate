@@ -8,6 +8,7 @@ import lombok.Setter;
 @Setter
 public class UpdateUserProfile {
 
+    @NotBlank(message = "field.required")
     private String username;
 
     private String oldPassword;
@@ -18,5 +19,4 @@ public class UpdateUserProfile {
 
     private String nickname;
 
-    private String avatarUrl;
 }

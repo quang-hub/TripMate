@@ -17,7 +17,7 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
 
-    private final String[] PUBLIC_URL = {"/api/**", "/swagger-ui/*", "/v3/api-docs", "/v3/api-docs/*",
+    private final String[] PUBLIC_URL = {"/api/**","/upload/**", "/swagger-ui/*", "/v3/api-docs", "/v3/api-docs/*",
             };
 
     @Bean

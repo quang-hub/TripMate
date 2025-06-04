@@ -1,6 +1,7 @@
 package com.quangcd.tripmate.service.user;
 
 import com.quangcd.tripmate.configuration.Translator;
+import com.quangcd.tripmate.constant.Constant;
 import com.quangcd.tripmate.dto.UserDto;
 import com.quangcd.tripmate.dto.request.user.CreateUserRequest;
 import com.quangcd.tripmate.dto.request.user.UpdateUserProfile;
@@ -13,11 +14,15 @@ import com.quangcd.tripmate.utils.CommonUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -34,8 +39,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public User findByUsername(String username) {
         return userRepository.findByUsernameAndIsDeleted(username, false)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                    Translator.toLocale("common.resource.not.found", "for user " + username)));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        Translator.toLocale("common.resource.not.found", "for user " + username)));
     }
 
     @Override
@@ -80,7 +85,7 @@ public class UserServiceImpl implements UserService {
                 .passwordHash(passwordHash)
                 .email(user.getEmail())
                 .nickname(user.getNickname())
-                .avatarUrl(user.getAvatarUrl())
+                .avatarUrl(Constant.DEFAULT_AVATAR_USER)
                 .build());
 
         emailService.sendRegisterAccount(registerUser.getEmail(), registerUser.getUsername());
@@ -103,7 +108,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateUserProfile(UpdateUserProfile userProfile) {
+    public void updateUserProfile(UpdateUserProfile userProfile, MultipartFile image) {
         User user = userRepository.findByUsernameAndIsDeleted(userProfile.getUsername(), false)
                 .orElseThrow(() -> {
                     log.error("User not found: {}", userProfile.getUsername());
@@ -130,14 +135,27 @@ public class UserServiceImpl implements UserService {
                     Translator.toLocale("common.error.invalid_password_format"));
         }
 
-        if (!userProfile.getOldPassword().equals(user.getPasswordHash())) {
+        if (!passwordEncoder.matches(userProfile.getOldPassword(), user.getPasswordHash())) {
             throw new ResourceNotFoundException(
                     Translator.toLocale("user.error.password_incorrect"));
         }
 
         user.setPasswordHash(passwordEncoder.encode(userProfile.getNewPassword()));
         user.setNickname(userProfile.getNickname());
-        user.setAvatarUrl(userProfile.getAvatarUrl());
+        if (!ObjectUtils.isEmpty(image)) {
+            File uploadImagePath = new File("/upload/user");
+            if(!uploadImagePath.exists()){
+                log.error("Upload path does not exist: {}", "/upload/user");
+                throw new ResourceNotFoundException(
+                        Translator.toLocale("common.error"));
+            }
+
+            String fileName = "user_" + RandomStringUtils.random(4,true,true);
+            File newFile = new File(uploadImagePath.getAbsolutePath()+fileName);
+
+            user.setAvatarUrl("http://localhost:8080/upload" + newFile.getPath());
+        }
+//        user.setAvatarUrl(userProfile.getAvatarUrl());
         userRepository.save(user);
     }
 

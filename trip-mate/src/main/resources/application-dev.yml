@@ -1,6 +1,12 @@
 server:
   port: 8080
 
+application:
+  domain-name: ${BASE_DOMAIN_NAME}
+  domain-image: ${BASE_DOMAIN_IMAGE}
+  domain-upload-user : ${BASE_UPLOAD_PATH_USER}
+  static-resources: ${STATIC_FOLDER}
+
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
