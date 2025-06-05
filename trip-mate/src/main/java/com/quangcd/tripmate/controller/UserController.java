@@ -5,6 +5,7 @@ import com.quangcd.tripmate.dto.UserDto;
 import com.quangcd.tripmate.dto.request.user.CreateUserRequest;
 import com.quangcd.tripmate.dto.request.user.UpdateUserProfile;
 import com.quangcd.tripmate.dto.response.BaseResponse;
+import com.quangcd.tripmate.dto.response.LoginResponse;
 import com.quangcd.tripmate.dto.response.UserSearchResponse;
 import com.quangcd.tripmate.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,12 +55,16 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody UserDto user, HttpSession session) {
         try {
-            userService.login(user);
+            LoginResponse loginResp = userService.login(user);
+
             session.setAttribute("username", user.getUsername());
-            log.info("login successful");
+            session.setAttribute("userId", loginResp.getUserId());
+            log.info("login object >>> {}",loginResp);
+            log.info("login successful >>> {}", loginResp.getUserId().toString());
             return ResponseEntity.ok(BaseResponse.builder()
                     .code(200)
                     .message(Translator.toLocale("common.success.notification"))
+                    .data(loginResp)
                     .build());
         } catch (Exception e) {
             log.error("errMessage={}", e.getMessage(), e.getCause());
@@ -74,7 +79,7 @@ public class UserController {
     public ResponseEntity<?> updateProfile(@Valid @RequestPart("request") UpdateUserProfile userProfile,
                                            @RequestPart(value = "file", required = false) MultipartFile file) {
         try {
-            userService.updateUserProfile(userProfile,file);
+            userService.updateUserProfile(userProfile, file);
             log.info("update successful");
             return ResponseEntity.ok(BaseResponse.builder()
                     .code(200)

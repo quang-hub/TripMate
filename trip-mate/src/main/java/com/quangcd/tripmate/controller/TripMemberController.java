@@ -29,7 +29,7 @@ public class TripMemberController {
 
     private final TripMemberService tripMemberService;
 
-    @GetMapping("/{userId}")
+    @GetMapping("/list")
     @Operation(summary = "get trip of user", description = "")
     @ApiResponse(
             responseCode = "200",
@@ -37,8 +37,11 @@ public class TripMemberController {
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = TripMemberResponse.class))
     )
-    public ResponseEntity<?> getTripsByUser(@PathVariable Long userId) {
+    public ResponseEntity<?> getTripsByUser(HttpSession session) {
         try {
+            Long userId = session.getAttribute("userId") != null ?
+                    Long.parseLong(session.getAttribute("userId").toString()) : null;
+            log.info("getTripsByUser >>> {}", userId);
             List<TripMemberResponse> listTripMembers = tripMemberService.getTripMembersByUserId(userId);
             log.info("get trip member successful");
             return ResponseEntity.ok(BaseResponse.builder()

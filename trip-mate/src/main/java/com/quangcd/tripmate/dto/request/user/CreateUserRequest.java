@@ -16,6 +16,4 @@ public class CreateUserRequest {
     @NotBlank(message = "field.required")
     private String nickname;
 
-    private String avatarUrl;
-
 }

@@ -3,10 +3,12 @@ package com.quangcd.tripmate.service.user;
 import com.quangcd.tripmate.dto.UserDto;
 import com.quangcd.tripmate.dto.request.user.CreateUserRequest;
 import com.quangcd.tripmate.dto.request.user.UpdateUserProfile;
+import com.quangcd.tripmate.dto.response.LoginResponse;
 import com.quangcd.tripmate.dto.response.UserSearchResponse;
 import com.quangcd.tripmate.entity.User;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,11 +17,11 @@ public interface UserService {
 
     User findById(Long id);
 
-    void saveUser(CreateUserRequest user);
+    void saveUser(CreateUserRequest user) throws IOException;
 
-    void login(UserDto user);
+    LoginResponse login(UserDto user);
 
-    void updateUserProfile(UpdateUserProfile userProfile, MultipartFile file);
+    void updateUserProfile(UpdateUserProfile userProfile, MultipartFile file) throws IOException;
 
     List<UserSearchResponse> findExceptUsername(String nickname, String username);
 }

@@ -5,6 +5,7 @@ import com.quangcd.tripmate.constant.Constant;
 import com.quangcd.tripmate.dto.UserDto;
 import com.quangcd.tripmate.dto.request.user.CreateUserRequest;
 import com.quangcd.tripmate.dto.request.user.UpdateUserProfile;
+import com.quangcd.tripmate.dto.response.LoginResponse;
 import com.quangcd.tripmate.dto.response.UserSearchResponse;
 import com.quangcd.tripmate.entity.User;
 import com.quangcd.tripmate.exception.ResourceNotFoundException;
@@ -14,14 +15,13 @@ import com.quangcd.tripmate.utils.CommonUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,6 +35,11 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final EmailService emailService;
+
+    @Value("${application.domain-image}")
+    private String BASE_DOMAIN_IMAGE;
+    @Value("${application.domain-upload}")
+    private String BASE_UPLOAD_PATH;
 
     @Override
     public User findByUsername(String username) {
@@ -52,7 +57,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void saveUser(CreateUserRequest user) {
+    public void saveUser(CreateUserRequest user) throws IOException {
 
         if (!CommonUtils.isvalidPassword(user.getPassword())) {
             log.error("Invalid password format: {}", user.getPassword());
@@ -85,14 +90,14 @@ public class UserServiceImpl implements UserService {
                 .passwordHash(passwordHash)
                 .email(user.getEmail())
                 .nickname(user.getNickname())
-                .avatarUrl(Constant.DEFAULT_AVATAR_USER)
+                .avatarUrl(CommonUtils.saveImageFile(null, BASE_DOMAIN_IMAGE, BASE_UPLOAD_PATH, Constant.USER))
                 .build());
 
         emailService.sendRegisterAccount(registerUser.getEmail(), registerUser.getUsername());
     }
 
     @Override
-    public void login(UserDto user) {
+    public LoginResponse login(UserDto user) {
         User user1 = userRepository.findByUsernameAndIsDeleted(user.getUsername(), false)
                 .orElseThrow(() -> {
                     log.error("User not found: {}", user.getUsername());
@@ -104,11 +109,14 @@ public class UserServiceImpl implements UserService {
             throw new ResourceNotFoundException(
                     Translator.toLocale("user.error.user_or_password_incorrect"));
         }
+        return LoginResponse.builder()
+                .userId(user1.getId())
+                .build();
 
     }
 
     @Override
-    public void updateUserProfile(UpdateUserProfile userProfile, MultipartFile image) {
+    public void updateUserProfile(UpdateUserProfile userProfile, MultipartFile image) throws IOException {
         User user = userRepository.findByUsernameAndIsDeleted(userProfile.getUsername(), false)
                 .orElseThrow(() -> {
                     log.error("User not found: {}", userProfile.getUsername());
@@ -143,19 +151,9 @@ public class UserServiceImpl implements UserService {
         user.setPasswordHash(passwordEncoder.encode(userProfile.getNewPassword()));
         user.setNickname(userProfile.getNickname());
         if (!ObjectUtils.isEmpty(image)) {
-            File uploadImagePath = new File("/upload/user");
-            if(!uploadImagePath.exists()){
-                log.error("Upload path does not exist: {}", "/upload/user");
-                throw new ResourceNotFoundException(
-                        Translator.toLocale("common.error"));
-            }
-
-            String fileName = "user_" + RandomStringUtils.random(4,true,true);
-            File newFile = new File(uploadImagePath.getAbsolutePath()+fileName);
-
-            user.setAvatarUrl("http://localhost:8080/upload" + newFile.getPath());
+            String fileUrl = CommonUtils.saveImageFile(image, BASE_DOMAIN_IMAGE, BASE_UPLOAD_PATH, Constant.USER);
+            user.setAvatarUrl(fileUrl);
         }
-//        user.setAvatarUrl(userProfile.getAvatarUrl());
         userRepository.save(user);
     }
 
