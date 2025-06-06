@@ -4,6 +4,13 @@ server:
     session:
       timeout: 30m
 
+jwt:
+  access-key: ${JWT_ACCESS_TOKEN}
+  refresh-key: ${JWT_REFRESH_TOKEN}
+  expiration-minutes: ${JWT_EXPIRATION_TIME_MINUTES}
+  expiration-DAYS: ${JWT_EXPIRATION_TIME_DAYS}
+  header: Authorization
+  prefix: Bearer
 
 application:
   domain-name: ${BASE_DOMAIN_NAME}

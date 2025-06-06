@@ -1,13 +1,20 @@
 package com.quangcd.tripmate.configuration;
 
-import jakarta.servlet.http.HttpServletResponse;
+import com.quangcd.tripmate.service.auth.UserServiceDetail;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -15,13 +22,24 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final String[] PUBLIC_URL = {"/api/**","/upload/**", "/swagger-ui/*", "/v3/api-docs", "/v3/api-docs/*",
-            };
+    private final CustomizeRequestFilter requestFilter;
+
+    private final UserServiceDetail userServiceDetail;
+    private final String[] PUBLIC_URL = {"/auth/**", "/upload/**", "/swagger-ui/*", "/v3/api-docs", "/v3/api-docs/*",
+    };
+
+    private final AuthenticationConfiguration authenticationConfiguration;
 
     @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
+    public AuthenticationManager authenticationManager() throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
@@ -42,10 +60,17 @@ public class SecurityConfig {
                 .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(request -> request.requestMatchers(PUBLIC_URL).permitAll()
                         .anyRequest().authenticated())
-                .exceptionHandling(handing -> handing.authenticationEntryPoint(((request, response, authException) -> response
-                        .sendError(HttpServletResponse.SC_UNAUTHORIZED, "UNAUTHORIZED: " + authException.getMessage()))))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider()).addFilterBefore(requestFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
+    }
+
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+        authenticationProvider.setUserDetailsService(userServiceDetail.userServiceDetail());
+        authenticationProvider.setPasswordEncoder(passwordEncoder());
+        return authenticationProvider;
     }
 
 }
