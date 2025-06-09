@@ -9,7 +9,7 @@ import java.util.List;
 public interface TripMemberService {
     List<TripMemberResponse> getTripMembersByUserId(Long userId);
 
-    void setAuthoritiesForMember(UpdateTripMemberRole updateTripMemberRole, String username);
+    void setAuthoritiesForMember(UpdateTripMemberRole updateTripMemberRole, Long userId);
 
     List<MemberInTripResponse> getMemberInTrip(Long tripId);
 }

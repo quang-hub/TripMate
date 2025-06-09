@@ -30,6 +30,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public TokenResponse getAccessToken(LoginRequest request) {
         try {
+            //authenticate user
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
@@ -38,7 +39,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             log.error("Login failed >>> {}",e.getMessage());
             throw new AccessDeniedException(e.getMessage());
         }
-
+        // check user is active or inactivated
         var user = userRepository.findByUsernameEqualsAndIsDeletedIsFalse(request.getUsername());
 
         if (user == null) {
@@ -46,6 +47,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new AccessDeniedException("User not found");
         }
 
+        // generate access and refresh tokens
         String accessToken = jwtService.generateAccessToken(user.getId(), request.getUsername(), user.getAuthorities());
         String refreshToken = jwtService.generateRefreshToken(user.getId(), request.getUsername(), user.getAuthorities());
 
@@ -78,5 +80,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             log.error("Access denied! errorMessage: {}", e.getMessage());
             throw new AccessDeniedException(e.getMessage());
         }
+    }
+
+    @Override
+    public Long extractUserId(Authentication authentication) {
+    if (authentication != null && authentication.isAuthenticated()) {
+        User user = (User) authentication.getPrincipal();
+        return user.getId();
+    }
+        return null;
     }
 }

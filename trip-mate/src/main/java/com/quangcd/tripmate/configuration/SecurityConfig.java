@@ -28,7 +28,7 @@ public class SecurityConfig {
     private final CustomizeRequestFilter requestFilter;
 
     private final UserServiceDetail userServiceDetail;
-    private final String[] PUBLIC_URL = {"/api/user/register/*","/auth/**", "/upload/**", "/swagger-ui/*", "/v3/api-docs", "/v3/api-docs/*",
+    private final String[] publicUrl = {"/api/user/register/*","/auth/**", "/upload/**", "/swagger-ui/*", "/v3/api-docs", "/v3/api-docs/*",
     };
 
     private final AuthenticationConfiguration authenticationConfiguration;
@@ -58,7 +58,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
                 .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests(request -> request.requestMatchers(PUBLIC_URL).permitAll()
+                .authorizeHttpRequests(request -> request.requestMatchers(publicUrl).permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider()).addFilterBefore(requestFilter, UsernamePasswordAuthenticationFilter.class)

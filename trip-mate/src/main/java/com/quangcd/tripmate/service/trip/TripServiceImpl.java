@@ -1,5 +1,6 @@
 package com.quangcd.tripmate.service.trip;
 
+import com.quangcd.tripmate.common.RoleMember;
 import com.quangcd.tripmate.configuration.Translator;
 import com.quangcd.tripmate.dto.request.trip.CreateTripRequest;
 import com.quangcd.tripmate.dto.request.trip.InviteMemberRequest;
@@ -35,8 +36,8 @@ public class TripServiceImpl implements TripService {
 
     @Override
     @Transactional
-    public void addNewTrip(CreateTripRequest request, String username) {
-        User user = userService.findByUsername(username);
+    public void addNewTrip(CreateTripRequest request, Long userId) {
+        User user = userService.findById(userId);
         if (request.getStartDate().after(request.getEndDate())) {
             throw new ResourceNotFoundException(
                     Translator.toLocale("common.start.date.not.greater.than.end.date"));
@@ -52,25 +53,25 @@ public class TripServiceImpl implements TripService {
                 .build();
 
         Trip savedTrip = tripRepository.save(trip);
-        log.info("User {} created new trip {}", username, savedTrip.getId());
+        log.info("User {} created new trip {}", userId, savedTrip.getId());
         TripMember tripMember = TripMember.builder()
                 .tripId(savedTrip.getId())
                 .userId(user.getId())
-                .role("LEADER")
+                .role(RoleMember.LEADER.toString())
                 .build();
         tripMemberRepository.save(tripMember);
 
     }
 
     @Override
-    public void updateTrip(UpdateTripRequest request, String username) {
-        User user = userService.findByUsername(username);
+    public void updateTrip(UpdateTripRequest request, Long userId) {
+        User user = userService.findById(userId);
 
         TripMember member = tripMemberRepository.findByTripIdAndUserIdAndIsDeleted(request.getTripId(), user.getId(), false)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         Translator.toLocale("tripmember.error.trip_member_not_found")));
 
-        if (!member.getRole().equals("LEADER")) {
+        if (!member.getRole().equals(RoleMember.LEADER.toString())) {
             throw new ResourceNotFoundException(
                     Translator.toLocale("tripmember.error.role_not_leader"));
         }
@@ -90,27 +91,25 @@ public class TripServiceImpl implements TripService {
                     Translator.toLocale("common.start.date.not.greater.than.end.date"));
         }
 
-        log.info("User {} updated trip {}", username, trip.getId());
+        log.info("User {} updated trip {}", userId, trip.getId());
 
         tripRepository.save(trip);
     }
 
     @Override
-    public void inviteTrip(InviteMemberRequest inviteMemberRequest, String username) {
-        User user = userService.findByUsername(username);
+    public void inviteTrip(InviteMemberRequest inviteMemberRequest, Long userId) {
+        User user = userService.findById(userId);
 
         TripMember leader = tripMemberRepository.findByTripIdAndUserIdAndIsDeleted(
                         inviteMemberRequest.getTripId(), user.getId(), false)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         Translator.toLocale("tripmember.error.trip_member_not_found")));
 
-        if (!leader.getRole().equals("LEADER")) {
+        if (!leader.getRole().equals(RoleMember.LEADER.toString())) {
             throw new ResourceNotFoundException(
                     Translator.toLocale("tripmember.error.role_not_leader"));
         }
-
-        User userToInvite = userService.findById(inviteMemberRequest.getUserId());
-
+        userService.findById(inviteMemberRequest.getUserId());
         Optional<TripMember> member = tripMemberRepository.findByTripIdAndUserIdAndIsDeleted(
                         inviteMemberRequest.getTripId(), inviteMemberRequest.getUserId(), false);
 
@@ -122,7 +121,7 @@ public class TripServiceImpl implements TripService {
         TripMember newMember = TripMember.builder()
                 .tripId(inviteMemberRequest.getTripId())
                 .userId(inviteMemberRequest.getUserId())
-                .role("MEMBER")
+                .role(RoleMember.MEMBER.toString())
                 .build();
 
         tripMemberRepository.save(newMember);

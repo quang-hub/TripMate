@@ -29,7 +29,7 @@ public class GlobalHandleException {
     private MessageSource messageSource;
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public ResponseEntity<Object> handleValidationExceptions(MethodArgumentNotValidException ex) {
         FieldError fieldError = ex.getBindingResult().getFieldErrors().get(0);
 
         String fieldName = fieldError.getField(); // ví dụ: "title"
@@ -38,7 +38,6 @@ public class GlobalHandleException {
         // Lấy tên hiển thị cho field
         String displayName = messageSource.getMessage("field." + fieldName, null, fieldName, LocaleContextHolder.getLocale());
 
-        // truyền tên field hiển thị vào {0}
         assert defaultMessageKey != null;
         String localizedMessage = messageSource.getMessage(defaultMessageKey, new Object[]{displayName}, LocaleContextHolder.getLocale());
 

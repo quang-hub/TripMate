@@ -14,7 +14,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
-import java.security.SignatureException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -40,6 +39,7 @@ public class JWTServiceImpl implements JWTService {
     @Value("${jwt.refresh-key}")
     private String refreshKey;
 
+    private final int oneMinus = 1000 * 60;
     @Override
     public String generateAccessToken(long userId, String username, Collection<? extends GrantedAuthority> authorities) {
         log.info("Generate access token for user {} with authorities {}", userId, authorities);
@@ -73,7 +73,7 @@ public class JWTServiceImpl implements JWTService {
                 .setClaims(claims)
                 .setSubject(username)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * expiryMinutes))
+                .setExpiration(new Date(System.currentTimeMillis() + oneMinus * expiryMinutes))
                 .signWith(getKey(ACCESS_TOKEN), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -84,7 +84,7 @@ public class JWTServiceImpl implements JWTService {
                 .setClaims(claims)
                 .setSubject(username)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * expiryDays))
+                .setExpiration(new Date(System.currentTimeMillis() + oneMinus * 60 * 24 * expiryDays))
                 .signWith(getKey(REFRESH_TOKEN), SignatureAlgorithm.HS256)
                 .compact();
     }

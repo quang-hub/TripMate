@@ -10,7 +10,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 public interface UserService {
     User findByUsername(String username);
@@ -19,9 +18,7 @@ public interface UserService {
 
     void saveUser(CreateUserRequest user) throws IOException;
 
-    LoginResponse login(UserDto user);
-
     void updateUserProfile(UpdateUserProfile userProfile, MultipartFile file) throws IOException;
 
-    List<UserSearchResponse> findExceptUsername(String nickname, String username);
+    List<UserSearchResponse> findExceptUsername(String nickname, Long userId);
 }

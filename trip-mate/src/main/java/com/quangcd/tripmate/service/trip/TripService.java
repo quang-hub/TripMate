@@ -8,9 +8,9 @@ import com.quangcd.tripmate.entity.Trip;
 public interface TripService {
     Trip findById(Long id);
 
-    void addNewTrip(CreateTripRequest request, String username);
+    void addNewTrip(CreateTripRequest request, Long userId);
 
-    void updateTrip(UpdateTripRequest request, String username);
+    void updateTrip(UpdateTripRequest request, Long userId);
 
-    void inviteTrip(InviteMemberRequest inviteMemberRequest, String username);
+    void inviteTrip(InviteMemberRequest inviteMemberRequest, Long userId);
 }

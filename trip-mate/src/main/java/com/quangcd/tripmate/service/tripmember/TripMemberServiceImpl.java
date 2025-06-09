@@ -17,10 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -36,6 +33,7 @@ public class TripMemberServiceImpl implements TripMemberService {
 
     @Override
     public List<TripMemberResponse> getTripMembersByUserId(Long userId) {
+
         List<TripMember> tripMember = tripMemberRepository.findAllTripMembersByUserIdAndIsDeleted(userId, false);
 
         return tripMember.stream()
@@ -53,18 +51,17 @@ public class TripMemberServiceImpl implements TripMemberService {
                             .logoUrl(trip.getLogoUrl())
                             .role(tm.getRole())
                             .build();
-                }).collect(Collectors.toList());
+                }).toList();
     }
 
     @Override
-    public void setAuthoritiesForMember(UpdateTripMemberRole updateTripMemberRole, String username) {
+    public void setAuthoritiesForMember(UpdateTripMemberRole updateTripMemberRole, Long userId) {
 
         if (!Constant.ROLE_IN_TRIP.containsKey(updateTripMemberRole.getRole())) {
             throw new ResourceNotFoundException(
                     Translator.toLocale("common.resource.not.found", "for role " + updateTripMemberRole.getRole()));
         }
-
-        User leader = userService.findByUsername(username);
+        User leader = userService.findById(userId);
 
         TripMember leaderMember = tripMemberRepository.findByTripIdAndUserIdAndIsDeleted(
                 updateTripMemberRole.getTripId(), leader.getId(), false)
@@ -86,10 +83,8 @@ public class TripMemberServiceImpl implements TripMemberService {
 
     @Override
     public List<MemberInTripResponse> getMemberInTrip(Long tripId) {
-        Trip trip = tripService.findById(tripId);
-
+        tripService.findById(tripId);
         List<TripMember> tripMembers = tripMemberRepository.findAllByTripIdAndIsDeleted(tripId, false);
-
         return tripMembers.stream()
                 .map(tm -> {
                     User user = userService.findById(tm.getUserId());
@@ -99,6 +94,6 @@ public class TripMemberServiceImpl implements TripMemberService {
                             .role(tm.getRole())
                             .avatarUrl(user.getAvatarUrl())
                             .build();
-                }).collect(Collectors.toList());
+                }).toList();
     }
 }

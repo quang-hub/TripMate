@@ -2,10 +2,8 @@ package com.quangcd.tripmate.service.user;
 
 import com.quangcd.tripmate.configuration.Translator;
 import com.quangcd.tripmate.constant.Constant;
-import com.quangcd.tripmate.dto.UserDto;
 import com.quangcd.tripmate.dto.request.user.CreateUserRequest;
 import com.quangcd.tripmate.dto.request.user.UpdateUserProfile;
-import com.quangcd.tripmate.dto.response.LoginResponse;
 import com.quangcd.tripmate.dto.response.UserSearchResponse;
 import com.quangcd.tripmate.entity.User;
 import com.quangcd.tripmate.exception.ResourceNotFoundException;
@@ -23,7 +21,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -37,9 +34,9 @@ public class UserServiceImpl implements UserService {
     private final EmailService emailService;
 
     @Value("${application.domain-image}")
-    private String BASE_DOMAIN_IMAGE;
+    private String baseDomainImage;
     @Value("${application.domain-upload}")
-    private String BASE_UPLOAD_PATH;
+    private String baseUploadPath;
 
     @Override
     public User findByUsername(String username) {
@@ -90,29 +87,10 @@ public class UserServiceImpl implements UserService {
                 .passwordHash(passwordHash)
                 .email(user.getEmail())
                 .nickname(user.getNickname())
-                .avatarUrl(CommonUtils.saveImageFile(null, BASE_DOMAIN_IMAGE, BASE_UPLOAD_PATH, Constant.USER))
+                .avatarUrl(CommonUtils.saveImageFile(null, baseDomainImage, baseUploadPath, Constant.USER))
                 .build());
 
         emailService.sendRegisterAccount(registerUser.getEmail(), registerUser.getUsername());
-    }
-
-    @Override
-    public LoginResponse login(UserDto user) {
-        User user1 = userRepository.findByUsernameAndIsDeleted(user.getUsername(), false)
-                .orElseThrow(() -> {
-                    log.error("User not found: {}", user.getUsername());
-                    return new ResourceNotFoundException(
-                            Translator.toLocale("user.error.user_or_password_incorrect"));
-                });
-
-        if (!passwordEncoder.matches(user.getPassword(), user1.getPasswordHash())) {
-            throw new ResourceNotFoundException(
-                    Translator.toLocale("user.error.user_or_password_incorrect"));
-        }
-        return LoginResponse.builder()
-                .userId(user1.getId())
-                .build();
-
     }
 
     @Override
@@ -151,24 +129,24 @@ public class UserServiceImpl implements UserService {
         user.setPasswordHash(passwordEncoder.encode(userProfile.getNewPassword()));
         user.setNickname(userProfile.getNickname());
         if (!ObjectUtils.isEmpty(image)) {
-            String fileUrl = CommonUtils.saveImageFile(image, BASE_DOMAIN_IMAGE, BASE_UPLOAD_PATH, Constant.USER);
+            String fileUrl = CommonUtils.saveImageFile(image, baseDomainImage, baseUploadPath, Constant.USER);
             user.setAvatarUrl(fileUrl);
         }
         userRepository.save(user);
     }
 
     @Override
-    public List<UserSearchResponse> findExceptUsername(String nickname, String username) {
+    public List<UserSearchResponse> findExceptUsername(String nickname, Long userId) {
         List<User> userList = userRepository.findAllByIsDeleted(false);
 
         return userList.stream()
-                .filter(user -> !user.getUsername().equals(username))
+                .filter(user -> !user.getId().equals(userId))
                 .filter(user -> nickname == null || user.getNickname().toLowerCase().contains(nickname.toLowerCase()))
                 .map(user -> UserSearchResponse.builder()
                         .id(user.getId())
                         .nickname(user.getNickname())
                         .avatarUrl(user.getAvatarUrl())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
     }
 }
