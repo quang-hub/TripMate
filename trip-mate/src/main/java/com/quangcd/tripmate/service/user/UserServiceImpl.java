@@ -16,7 +16,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 public class UserServiceImpl implements UserService {
 
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final EmailService emailService;
 
@@ -59,13 +59,13 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void saveUser(CreateUserRequest user) throws IOException {
 
-        if (!CommonUtils.isvalidPassword(user.getPassword())) {
+        if (CommonUtils.validPassword(user.getPassword())) {
             log.error("Invalid password format: {}", user.getPassword());
             throw new ResourceNotFoundException(
                     Translator.toLocale("common.error.invalid_password_format"));
         }
 
-        if (!CommonUtils.isvalidEmail(user.getEmail())) {
+        if (CommonUtils.validEmail(user.getEmail())) {
             log.error("Invalid email format: {}", user.getEmail());
             throw new ResourceNotFoundException(
                     Translator.toLocale("common.error.invalid_email_format"));
@@ -124,7 +124,7 @@ public class UserServiceImpl implements UserService {
                             Translator.toLocale("user.error.user_or_password_incorrect"));
                 });
         if (userProfile.getEmail() != null && !userProfile.getEmail().isEmpty()) {
-            if (!CommonUtils.isvalidEmail(userProfile.getEmail())) {
+            if (CommonUtils.validEmail(userProfile.getEmail())) {
                 log.error("Invalid email format: {}", userProfile.getEmail());
                 throw new ResourceNotFoundException(
                         Translator.toLocale("common.error.invalid_email_format"));
@@ -137,7 +137,7 @@ public class UserServiceImpl implements UserService {
             }
             user.setEmail(userProfile.getEmail());
         }
-        if (!CommonUtils.isvalidPassword(userProfile.getNewPassword())) {
+        if (CommonUtils.validPassword(userProfile.getNewPassword())) {
             log.error("Invalid password format: {}", userProfile.getNewPassword());
             throw new ResourceNotFoundException(
                     Translator.toLocale("common.error.invalid_password_format"));
