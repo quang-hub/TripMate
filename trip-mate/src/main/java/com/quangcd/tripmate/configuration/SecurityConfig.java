@@ -28,7 +28,7 @@ public class SecurityConfig {
     private final CustomizeRequestFilter requestFilter;
 
     private final UserServiceDetail userServiceDetail;
-    private final String[] PUBLIC_URL = {"/auth/**", "/upload/**", "/swagger-ui/*", "/v3/api-docs", "/v3/api-docs/*",
+    private final String[] PUBLIC_URL = {"/api/user/register/*","/auth/**", "/upload/**", "/swagger-ui/*", "/v3/api-docs", "/v3/api-docs/*",
     };
 
     private final AuthenticationConfiguration authenticationConfiguration;

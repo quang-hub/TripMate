@@ -9,13 +9,14 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @MappedSuperclass
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class BaseEntity {
+public class BaseEntity implements Serializable {
 
     public static final int CREATED_BY_MAX_LENGTH = 255;
     public static final int UPDATED_BY_MAX_LENGTH = 255;

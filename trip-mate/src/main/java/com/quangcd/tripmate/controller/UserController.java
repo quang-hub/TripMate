@@ -31,10 +31,9 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
-//    private final HttpSession session;
 
     @PostMapping("/register")
-    @Operation(summary = "register user", description = "")
+    @Operation(summary = "register user", description = "register user with username, password, email and phone")
     public ResponseEntity<?> registerUser(@Valid @RequestBody CreateUserRequest user) {
         try {
             userService.saveUser(user);

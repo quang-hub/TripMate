@@ -11,7 +11,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "users")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -36,7 +37,7 @@ public class User extends BaseEntity implements UserDetails, Serializable {
 
     @Override
     public String getPassword() {
-        return "";
+        return this.passwordHash;
     }
 
     @Override

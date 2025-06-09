@@ -4,7 +4,6 @@ import com.quangcd.tripmate.dto.request.user.LoginRequest;
 import com.quangcd.tripmate.dto.response.TokenResponse;
 import com.quangcd.tripmate.service.security.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tags;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -28,11 +27,6 @@ public class AuthController {
     @Operation(summary = "Get refresh token", description = "This endpoint is used to get an refresh token for authenticated users.")
     @PostMapping("refresh-token")
     public TokenResponse getRefreshToken(@RequestParam String refreshToken) {
-        log.info("refresh token request");
-        return TokenResponse.builder()
-                .accessToken("DUMMY-ACCESS-TOKEN")
-                .refreshToken("DUMMY-REFRESH-TOKEN")
-                .build();
-
+        return authenticationService.getRefreshToken(refreshToken);
     }
 }
