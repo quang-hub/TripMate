@@ -13,4 +13,6 @@ public interface TripService {
     void updateTrip(UpdateTripRequest request, Long userId);
 
     void inviteTrip(InviteMemberRequest inviteMemberRequest, Long userId);
+
+    void removeTrip(Long tripId, Long userId);
 }

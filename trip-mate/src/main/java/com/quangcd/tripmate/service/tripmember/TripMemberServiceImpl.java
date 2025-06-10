@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-@Slf4j
+@Slf4j(topic = "TRIP-MEMBER-SERVICE")
 @RequiredArgsConstructor
 
 public class TripMemberServiceImpl implements TripMemberService {
@@ -95,5 +95,14 @@ public class TripMemberServiceImpl implements TripMemberService {
                             .avatarUrl(user.getAvatarUrl())
                             .build();
                 }).toList();
+    }
+
+    @Override
+    public TripMember findByTripIdAndUserId(Long tripId, Long userId) {
+        TripMember tagetMember = tripMemberRepository.findByTripIdAndUserIdAndIsDeleted(
+                        tripId, userId,false)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        Translator.toLocale("tripmember.error.trip_member_not_found")));
+        return tagetMember;
     }
 }

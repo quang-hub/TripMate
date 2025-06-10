@@ -24,7 +24,7 @@ import java.util.List;
 
 
 @Service
-@Slf4j
+@Slf4j(topic = "USER-SERVICE")
 @RequiredArgsConstructor
 
 public class UserServiceImpl implements UserService {

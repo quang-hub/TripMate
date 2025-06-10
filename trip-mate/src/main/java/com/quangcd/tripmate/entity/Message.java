@@ -16,7 +16,7 @@ public class Message extends BaseEntity {
     private Long id;
 
     private Long tripId;
-    private Long senderID;
+    private Long senderId;
     private String content;
 }
 

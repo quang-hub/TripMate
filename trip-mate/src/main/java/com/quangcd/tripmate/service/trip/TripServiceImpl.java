@@ -17,11 +17,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
+@Slf4j(topic = "TRIP-SERVICE")
 
 public class TripServiceImpl implements TripService {
     private final TripRepository tripRepository;
@@ -30,7 +31,7 @@ public class TripServiceImpl implements TripService {
 
     @Override
     public Trip findById(Long id) {
-        return tripRepository.findByIdAndIsDeleted(id,false).orElseThrow(() -> new ResourceNotFoundException(
+        return tripRepository.findByIdAndIsDeleted(id, false).orElseThrow(() -> new ResourceNotFoundException(
                 Translator.toLocale("common.resource.not.found", "for trip " + id)));
     }
 
@@ -51,7 +52,7 @@ public class TripServiceImpl implements TripService {
                 .logoUrl(request.getLogoUrl())
                 .creatorId(user.getId())
                 .build();
-
+        trip.setCreatedBy(user.getUsername());
         Trip savedTrip = tripRepository.save(trip);
         log.info("User {} created new trip {}", userId, savedTrip.getId());
         TripMember tripMember = TripMember.builder()
@@ -111,9 +112,9 @@ public class TripServiceImpl implements TripService {
         }
         userService.findById(inviteMemberRequest.getUserId());
         Optional<TripMember> member = tripMemberRepository.findByTripIdAndUserIdAndIsDeleted(
-                        inviteMemberRequest.getTripId(), inviteMemberRequest.getUserId(), false);
+                inviteMemberRequest.getTripId(), inviteMemberRequest.getUserId(), false);
 
-        if(member.isPresent()){
+        if (member.isPresent()) {
             throw new ResourceNotFoundException(
                     Translator.toLocale("tripmember.error.user_already_in_trip"));
         }
@@ -125,6 +126,31 @@ public class TripServiceImpl implements TripService {
                 .build();
 
         tripMemberRepository.save(newMember);
+
+    }
+
+    @Override
+    @Transactional
+    public void removeTrip(Long tripId, Long userId) {
+        User user = userService.findById(userId);
+
+        TripMember leader = tripMemberRepository.findByTripIdAndUserIdAndIsDeleted(tripId, userId, false)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        Translator.toLocale("tripmember.error.trip_member_not_found")));
+
+        if (!leader.getRole().equals(RoleMember.LEADER.toString())) {
+            throw new ResourceNotFoundException(
+                    Translator.toLocale("tripmember.error.role_not_leader"));
+        }
+        Trip trip = tripRepository.findByIdAndIsDeleted(tripId, false)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        Translator.toLocale("common.resource.not.found", "for trip " + tripId)));
+        trip.setDeleted(true);
+        tripRepository.save(trip);
+
+        List<TripMember> members = tripMemberRepository.findAllByTripIdAndIsDeleted(tripId, false);
+        members.forEach(tm -> tm.setDeleted(true));
+        tripMemberRepository.saveAll(members);
 
     }
 }
