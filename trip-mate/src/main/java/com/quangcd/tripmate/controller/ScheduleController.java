@@ -2,6 +2,7 @@ package com.quangcd.tripmate.controller;
 
 import com.quangcd.tripmate.configuration.Translator;
 import com.quangcd.tripmate.constant.Constant;
+import com.quangcd.tripmate.dto.ScheduleDto;
 import com.quangcd.tripmate.dto.request.schedule.CreateScheduleRequest;
 import com.quangcd.tripmate.dto.request.schedule.UpdateScheduleRequest;
 import com.quangcd.tripmate.dto.response.BaseResponse;
@@ -15,6 +16,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/schedule")
 @Slf4j(topic = "SCHEDULE-CONTROLLER")
@@ -24,6 +27,27 @@ public class ScheduleController {
 
     private final AuthenticationService authenticationService;
     private final ScheduleService scheduleService;
+
+    @GetMapping("/list/{tripId}")
+    @Operation(summary = "listSchedule for trip", description = "listSchedule for trip")
+    public ResponseEntity<Object> listSchedule(@PathVariable Long tripId, Authentication authentication) {
+        try {
+            Long userId = authenticationService.extractUserId(authentication);
+            List<ScheduleDto> response = scheduleService.findScheduleByTripId(tripId, userId);
+            log.info("listSchedule successful");
+            return ResponseEntity.ok(BaseResponse.builder()
+                    .code(200)
+                    .message(Translator.toLocale(Constant.COMMON_SUCCESS_MESSAGE))
+                    .data(response)
+                    .build());
+        } catch (Exception e) {
+            log.error("listSchedule errMessage={}", e.getMessage(), e.getCause());
+            return ResponseEntity.badRequest().body(BaseResponse.builder()
+                    .code(400)
+                    .message(e.getMessage())
+                    .build());
+        }
+    }
 
     @PostMapping("/create")
     @Operation(summary = "createSchedule for trip", description = "create schedule for trip")

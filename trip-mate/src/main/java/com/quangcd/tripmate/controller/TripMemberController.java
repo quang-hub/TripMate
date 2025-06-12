@@ -5,6 +5,7 @@ import com.quangcd.tripmate.constant.Constant;
 import com.quangcd.tripmate.dto.request.tripmember.UpdateTripMemberRole;
 import com.quangcd.tripmate.dto.response.BaseResponse;
 import com.quangcd.tripmate.dto.response.MemberInTripResponse;
+import com.quangcd.tripmate.dto.response.TripDetailResponse;
 import com.quangcd.tripmate.dto.response.TripMemberResponse;
 import com.quangcd.tripmate.service.security.AuthenticationService;
 import com.quangcd.tripmate.service.tripmember.TripMemberService;

@@ -1,4 +1,3 @@
-// API configuration and helper functions
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080"
 
 export interface ApiResponse<T = any> {
@@ -14,21 +13,24 @@ interface BackendResponse<T = any> {
   data: T
 }
 
+// Updated Auth API types
+export interface LoginRequest {
+  username: string
+  password: string
+  platform: string
+}
+
+export interface TokenResponse {
+  accessToken: string
+  refreshToken: string
+}
+
 // User API types
 export interface CreateUserRequest {
   username: string
   password: string
   email: string
   nickname: string
-}
-
-export interface UserDto {
-  username: string
-  password: string
-}
-
-export interface LoginResponse {
-  userId: number
 }
 
 export interface UpdateProfileRequest {
@@ -92,17 +94,83 @@ export interface UpdateTripMemberRole {
   memberId: number
 }
 
-// Updated API helper function to handle your backend's response structure
+// Token management functions
+export const tokenManager = {
+  getAccessToken: (): string | null => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("accessToken")
+    }
+    return null
+  },
+
+  getRefreshToken: (): string | null => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("refreshToken")
+    }
+    return null
+  },
+
+  setTokens: (tokens: TokenResponse): void => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("accessToken", tokens.accessToken)
+      localStorage.setItem("refreshToken", tokens.refreshToken)
+    }
+  },
+
+  clearTokens: (): void => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("accessToken")
+      localStorage.removeItem("refreshToken")
+      localStorage.removeItem("userId")
+      localStorage.removeItem("username")
+    }
+  },
+
+  refreshAccessToken: async (): Promise<TokenResponse | null> => {
+    const refreshToken = tokenManager.getRefreshToken()
+    if (!refreshToken) return null
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/auth/refresh-token?refreshToken=${encodeURIComponent(refreshToken)}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      )
+
+      if (response.ok) {
+        const tokens: TokenResponse = await response.json()
+        tokenManager.setTokens(tokens)
+        return tokens
+      }
+    } catch (error) {
+      console.error("Token refresh failed:", error)
+    }
+
+    return null
+  },
+}
+
+// Updated API helper function with token management
 async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
   try {
     const defaultHeaders: Record<string, string> = {}
+
+    // Add Authorization header if we have an access token
+    const accessToken = tokenManager.getAccessToken()
+    if (accessToken) {
+      defaultHeaders["Authorization"] = `Bearer ${accessToken}`
+    }
 
     // Only add Content-Type for non-FormData requests
     if (!(options.body instanceof FormData)) {
       defaultHeaders["Content-Type"] = "application/json"
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    let response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "GET",
       ...options,
       headers: {
@@ -111,11 +179,37 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
       },
     })
 
+    // If we get a 401 and have a refresh token, try to refresh
+    if (response.status === 401 && accessToken) {
+      const newTokens = await tokenManager.refreshAccessToken()
+      if (newTokens) {
+        // Retry the request with the new token
+        response = await fetch(`${API_BASE_URL}${endpoint}`, {
+          method: "GET",
+          ...options,
+          headers: {
+            ...defaultHeaders,
+            Authorization: `Bearer ${newTokens.accessToken}`,
+            ...options.headers,
+          },
+        })
+      }
+    }
+
     console.log(`API ${endpoint} response status:`, response.status) // Debug log
 
     if (!response.ok) {
       const errorText = await response.text()
       console.error(`API ${endpoint} error:`, errorText) // Debug log
+
+      // If still 401 after refresh attempt, clear tokens and redirect to login
+      if (response.status === 401) {
+        tokenManager.clearTokens()
+        if (typeof window !== "undefined") {
+          window.location.href = "/auth/login"
+        }
+      }
+
       throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`)
     }
 
@@ -144,7 +238,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
         }
       }
 
-      // Fallback for other response formats
+      // Handle direct responses (like token responses)
       return { success: true, data: rawData }
     } else {
       const text = await response.text()
@@ -166,6 +260,28 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 }
 
+// Auth API functions
+export const authApi = {
+  login: async (credentials: LoginRequest): Promise<ApiResponse<TokenResponse>> => {
+    return apiCall<TokenResponse>("/auth/access-token", {
+      method: "POST",
+      body: JSON.stringify(credentials),
+    })
+  },
+
+  refreshToken: async (refreshToken: string): Promise<ApiResponse<TokenResponse>> => {
+    return apiCall<TokenResponse>(`/auth/refresh-token?refreshToken=${encodeURIComponent(refreshToken)}`, {
+      method: "POST",
+    })
+  },
+
+  logout: async (): Promise<ApiResponse> => {
+    // Clear tokens locally
+    tokenManager.clearTokens()
+    return { success: true }
+  },
+}
+
 // User API functions
 export const userApi = {
   register: async (userData: CreateUserRequest): Promise<ApiResponse> => {
@@ -175,38 +291,20 @@ export const userApi = {
     })
   },
 
-  login: async (credentials: UserDto): Promise<ApiResponse<LoginResponse>> => {
-    return apiCall<LoginResponse>("/api/user/login", {
-      method: "POST",
-      body: JSON.stringify(credentials),
-    })
-  },
-
-  logout: async (): Promise<ApiResponse> => {
-    return apiCall("/api/user/logout", {
-      method: "POST",
-    })
-  },
-
   updateProfile: async (profileData: UpdateProfileRequest, file?: File): Promise<ApiResponse> => {
-    if (file) {
-      // Use FormData for file uploads
-      const formData = new FormData()
-      formData.append("request", JSON.stringify(profileData))
-      formData.append("file", file)
+    // Always use FormData for this endpoint
+    const formData = new FormData()
+    formData.append("request", JSON.stringify(profileData))
 
-      return apiCall("/api/user/update-profile", {
-        method: "POST",
-        body: formData,
-        // Don't set headers for FormData - browser will set them automatically
-      })
-    } else {
-      // Use JSON for profile updates without file
-      return apiCall("/api/user/update-profile", {
-        method: "POST",
-        body: JSON.stringify({ request: profileData }),
-      })
+    if (file) {
+      formData.append("file", file)
     }
+
+    return apiCall("/api/user/update-profile", {
+      method: "POST",
+      body: formData,
+      // Don't set headers for FormData - browser will set them automatically
+    })
   },
 
   searchUsers: async (nickname: string): Promise<ApiResponse<UserSearchResponse[]>> => {
@@ -249,7 +347,6 @@ export const tripMembersApi = {
     })
   },
 
-  // Updated to use the new endpoint
   getUserTrips: async (): Promise<ApiResponse<TripMemberResponse[]>> => {
     return apiCall(`/api/trip-members/list`, {
       method: "GET",

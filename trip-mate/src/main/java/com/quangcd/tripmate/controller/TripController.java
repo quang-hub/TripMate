@@ -6,8 +6,15 @@ import com.quangcd.tripmate.dto.request.trip.InviteMemberRequest;
 import com.quangcd.tripmate.dto.request.trip.UpdateTripRequest;
 import com.quangcd.tripmate.dto.request.trip.CreateTripRequest;
 import com.quangcd.tripmate.dto.response.BaseResponse;
+import com.quangcd.tripmate.dto.response.TripDetailResponse;
+import com.quangcd.tripmate.dto.response.TripMemberResponse;
 import com.quangcd.tripmate.service.security.AuthenticationService;
 import com.quangcd.tripmate.service.trip.TripService;
+import com.quangcd.tripmate.service.tripmember.TripMemberService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +32,35 @@ import org.springframework.web.bind.annotation.*;
 public class TripController {
 
     private final TripService tripService;
+    private final TripMemberService tripMemberService;
     private final AuthenticationService authenticationService;
+
+    @GetMapping("/detail/{tripId}")
+    @Operation(summary = "get trip detail", description = "get all trips that user is a member of")
+    @ApiResponse(
+            responseCode = "200",
+            description = "OK",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = TripMemberResponse.class))
+    )
+    public ResponseEntity<Object> getTripDetail(@PathVariable Long tripId,Authentication authentication) {
+        try {
+            Long userId = authenticationService.extractUserId(authentication);
+            TripDetailResponse response = tripMemberService.getTripMemberDetail(tripId,userId);
+            log.info("get trip member successful");
+            return ResponseEntity.ok(BaseResponse.builder()
+                    .code(200)
+                    .message(Translator.toLocale(Constant.COMMON_SUCCESS_MESSAGE))
+                    .data(response)
+                    .build());
+        } catch (Exception e) {
+            log.error("getTripsByUser errMessage={}", e.getMessage(), e.getCause());
+            return ResponseEntity.badRequest().body(BaseResponse.builder()
+                    .code(400)
+                    .message(e.getMessage())
+                    .build());
+        }
+    }
 
     @PostMapping("/create")
     public ResponseEntity<Object> createTrip(@Valid @RequestBody CreateTripRequest request, Authentication authentication) {

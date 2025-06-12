@@ -67,6 +67,20 @@ public class JWTServiceImpl implements JWTService {
         return extractClaim(token, type, Claims::getSubject);
     }
 
+    @Override
+    public Long extractUserId(String token, TokenType type) {
+        log.info("Extracting user ID from token");
+        return extractClaim(token, type, claims -> {
+            Object userIdObj = claims.get("userId");
+            if (userIdObj instanceof Integer) {
+                return ((Integer) userIdObj).longValue();
+            } else if (userIdObj instanceof Long) {
+                return (Long) userIdObj;
+            }
+            throw new IllegalArgumentException("Invalid user ID type in token");
+        });
+    }
+
     private String generateToken(Map<String, Object> claims, String username) {
         log.info("----------[ generateToken ]----------");
         return Jwts.builder()

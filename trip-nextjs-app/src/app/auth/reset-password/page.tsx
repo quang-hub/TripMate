@@ -5,15 +5,14 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Mail, Plane } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/hooks/use-toast"
 
 export default function ResetPasswordPage() {
-  const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
   const [email, setEmail] = useState("")
@@ -27,16 +26,9 @@ export default function ResetPasswordPage() {
       await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulate API call
 
       setEmailSent(true)
-      toast({
-        title: "Reset email sent",
-        description: "Check your email for password reset instructions.",
-      })
+      toast.success("Reset email sent! Check your email for password reset instructions.")
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to send reset email. Please try again.",
-        variant: "destructive",
-      })
+      toast.error("Failed to send reset email. Please try again.")
     } finally {
       setIsLoading(false)
     }

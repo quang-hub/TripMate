@@ -5,6 +5,7 @@ import com.quangcd.tripmate.configuration.Translator;
 import com.quangcd.tripmate.constant.Constant;
 import com.quangcd.tripmate.dto.request.tripmember.UpdateTripMemberRole;
 import com.quangcd.tripmate.dto.response.MemberInTripResponse;
+import com.quangcd.tripmate.dto.response.TripDetailResponse;
 import com.quangcd.tripmate.dto.response.TripMemberResponse;
 import com.quangcd.tripmate.entity.Trip;
 import com.quangcd.tripmate.entity.TripMember;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -64,7 +66,7 @@ public class TripMemberServiceImpl implements TripMemberService {
         User leader = userService.findById(userId);
 
         TripMember leaderMember = tripMemberRepository.findByTripIdAndUserIdAndIsDeleted(
-                updateTripMemberRole.getTripId(), leader.getId(), false)
+                        updateTripMemberRole.getTripId(), leader.getId(), false)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         Translator.toLocale("tripmember.error.trip.not_found")));
         if (!leaderMember.getRole().equals("LEADER")) {
@@ -73,7 +75,7 @@ public class TripMemberServiceImpl implements TripMemberService {
         }
 
         TripMember tagetMember = tripMemberRepository.findByTripIdAndUserIdAndIsDeleted(
-                updateTripMemberRole.getTripId(), updateTripMemberRole.getMemberId(), false)
+                        updateTripMemberRole.getTripId(), updateTripMemberRole.getMemberId(), false)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         Translator.toLocale("tripmember.error.trip_member_not_found")));
 
@@ -100,9 +102,36 @@ public class TripMemberServiceImpl implements TripMemberService {
     @Override
     public TripMember findByTripIdAndUserId(Long tripId, Long userId) {
         TripMember tagetMember = tripMemberRepository.findByTripIdAndUserIdAndIsDeleted(
-                        tripId, userId,false)
+                        tripId, userId, false)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         Translator.toLocale("tripmember.error.trip_member_not_found")));
         return tagetMember;
+    }
+
+    @Override
+    public TripDetailResponse getTripMemberDetail(Long tripId, Long userId) {
+
+        Trip trip = tripService.findById(tripId);
+        int memberCount = tripMemberRepository.countByTripIdAndIsDeleted(tripId, false);
+        if (memberCount == 0) {
+            throw new ResourceNotFoundException(
+                    Translator.toLocale("tripmember.error.trip.not_found")));
+        }
+        String status = trip.getEndDate().after(new Date()) ? "IMCOMPLETE" : "COMPLETE";
+        if (trip.getStartDate().after(new Date())) {
+            status = "NOT STARTED";
+        }
+
+        TripDetailResponse response = TripDetailResponse.builder()
+                .tripId(trip.getId())
+                .name(trip.getName())
+                .description(trip.getDescription())
+                .startDate(trip.getStartDate())
+                .endDate(trip.getEndDate())
+                .memberCount(memberCount)
+                .logoUrl(trip.getLogoUrl())
+                .status(status)
+                .build();
+        return response;
     }
 }

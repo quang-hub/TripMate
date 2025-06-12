@@ -6,6 +6,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Plane } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,12 +14,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useToast } from "@/hooks/use-toast"
 import { userApi, type CreateUserRequest } from "@/lib/api"
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -88,20 +87,13 @@ export default function RegisterPage() {
       const response = await userApi.register(userData)
 
       if (response.success) {
-        toast({
-          title: "Account created successfully!",
-          description: "Welcome to TripTogether! You can now sign in.",
-        })
+        toast.success("Account created successfully! Welcome to TripTogether!")
         router.push("/auth/login")
       } else {
         throw new Error(response.message || "Registration failed")
       }
     } catch (error) {
-      toast({
-        title: "Registration failed",
-        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
-        variant: "destructive",
-      })
+      toast.error(error instanceof Error ? error.message : "Something went wrong. Please try again.")
     } finally {
       setIsLoading(false)
     }

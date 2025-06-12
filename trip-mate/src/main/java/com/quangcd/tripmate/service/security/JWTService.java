@@ -13,4 +13,5 @@ public interface JWTService {
 
     String extractUsername(String token, TokenType tokenType);
 
+    Long extractUserId(String token, TokenType type);
 }

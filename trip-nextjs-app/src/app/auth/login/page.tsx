@@ -6,19 +6,18 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Plane } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/lib/auth-context"
-import { userApi, type UserDto } from "@/lib/api"
+import { authApi, tokenManager, type LoginRequest } from "@/lib/api"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { toast } = useToast()
   const { login } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -32,51 +31,42 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const credentials: UserDto = {
+      const credentials: LoginRequest = {
         username: formData.username,
         password: formData.password,
+        platform: "web", // You can make this dynamic if needed
       }
 
-      const response = await userApi.login(credentials)
+      const response = await authApi.login(credentials)
       console.log("Login response:", response) // Debug log
 
       if (response.success && response.data) {
-        const userId = response.data.userId
+        const tokens = response.data
 
-        if (!userId) {
-          console.error("Login response structure:", response)
-          throw new Error("Could not extract user ID from response")
-        }
+        // Store tokens
+        tokenManager.setTokens(tokens)
 
-        // Store user data with the returned userId
+        // Create user data (you might want to decode the JWT to get user info)
         const userData = {
-          id: userId,
+          id: 0, // You might want to decode this from the JWT
           username: formData.username,
-          nickname: formData.username, // You might want to fetch full user details
-          email: "", // You might want to fetch full user details
+          nickname: formData.username,
+          email: "",
         }
 
-        // Store userId in localStorage for persistence
-        localStorage.setItem("userId", userId.toString())
+        // Store username for display purposes
         localStorage.setItem("username", formData.username)
 
         login(userData)
 
-        toast({
-          title: "Login successful",
-          description: "Welcome back to TripTogether!",
-        })
+        toast.success("Welcome back to TripTogether!")
         router.push("/")
       } else {
         throw new Error(response.message || "Invalid credentials")
       }
     } catch (error) {
       console.error("Login error:", error) // Debug log
-      toast({
-        title: "Login failed",
-        description: error instanceof Error ? error.message : "Please check your username and password.",
-        variant: "destructive",
-      })
+      toast.error(error instanceof Error ? error.message : "Please check your username and password.")
     } finally {
       setIsLoading(false)
     }

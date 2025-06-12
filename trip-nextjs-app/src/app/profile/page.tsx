@@ -5,6 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { ChevronLeft, Camera, Eye, EyeOff } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,11 +16,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MainNav } from "@/components/main-nav"
 import { UserNav } from "@/components/user-nav"
-import { useToast } from "@/hooks/use-toast"
 import { userApi, type UpdateProfileRequest } from "@/lib/api"
 
 export default function ProfilePage() {
-  const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
@@ -55,20 +54,13 @@ export default function ProfilePage() {
       const response = await userApi.updateProfile(updateData, avatarFile || undefined)
 
       if (response.success) {
-        toast({
-          title: "Profile updated",
-          description: "Your profile has been updated successfully.",
-        })
+        toast.success("Profile updated successfully!")
         setAvatarFile(null)
       } else {
         throw new Error(response.message || "Failed to update profile")
       }
     } catch (error) {
-      toast({
-        title: "Update failed",
-        description: error instanceof Error ? error.message : "Failed to update profile. Please try again.",
-        variant: "destructive",
-      })
+      toast.error(error instanceof Error ? error.message : "Failed to update profile. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -78,20 +70,12 @@ export default function ProfilePage() {
     e.preventDefault()
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast({
-        title: "Password mismatch",
-        description: "New passwords do not match.",
-        variant: "destructive",
-      })
+      toast.error("New passwords do not match.")
       return
     }
 
     if (passwordData.newPassword.length < 8) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 8 characters long.",
-        variant: "destructive",
-      })
+      toast.error("Password must be at least 8 characters long.")
       return
     }
 
@@ -107,10 +91,7 @@ export default function ProfilePage() {
       const response = await userApi.updateProfile(updateData)
 
       if (response.success) {
-        toast({
-          title: "Password updated",
-          description: "Your password has been updated successfully.",
-        })
+        toast.success("Password updated successfully!")
 
         setPasswordData({
           currentPassword: "",
@@ -121,12 +102,9 @@ export default function ProfilePage() {
         throw new Error(response.message || "Failed to update password")
       }
     } catch (error) {
-      toast({
-        title: "Update failed",
-        description:
-          error instanceof Error ? error.message : "Failed to update password. Please check your current password.",
-        variant: "destructive",
-      })
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update password. Please check your current password.",
+      )
     } finally {
       setIsLoading(false)
     }
@@ -166,19 +144,12 @@ export default function ProfilePage() {
     try {
       const response = await userApi.logout()
       if (response.success) {
-        toast({
-          title: "Logged out",
-          description: "You have been logged out successfully.",
-        })
+        toast.success("You have been logged out successfully.")
         // Redirect to login page
         window.location.href = "/auth/login"
       }
     } catch (error) {
-      toast({
-        title: "Logout failed",
-        description: "Failed to logout. Please try again.",
-        variant: "destructive",
-      })
+      toast.error("Failed to logout. Please try again.")
     }
   }
 

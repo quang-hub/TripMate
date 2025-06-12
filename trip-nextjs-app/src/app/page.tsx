@@ -3,18 +3,17 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { PlusCircle } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { TripCard } from "@/components/trip-card"
 import { MainNav } from "@/components/main-nav"
 import { UserNav } from "@/components/user-nav"
-import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/lib/auth-context"
 import { tripMembersApi, type TripMemberResponse } from "@/lib/api"
 import { TripCardSkeleton } from "@/components/trip-card-skeleton"
 
 export default function Dashboard() {
-  const { toast } = useToast()
   const { user, isLoading: authLoading } = useAuth()
   const [trips, setTrips] = useState<TripMemberResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -45,10 +44,8 @@ export default function Dashboard() {
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Failed to load trips"
         setError(errorMessage)
-        toast({
-          title: "Error loading trips",
+        toast.error("Error loading trips", {
           description: errorMessage,
-          variant: "destructive",
         })
       } finally {
         setIsLoading(false)
@@ -56,7 +53,7 @@ export default function Dashboard() {
     }
 
     fetchUserTrips()
-  }, [user, authLoading, toast])
+  }, [user, authLoading])
 
   const handleRetry = () => {
     setError(null)

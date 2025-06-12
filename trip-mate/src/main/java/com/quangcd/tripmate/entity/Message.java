@@ -3,8 +3,6 @@ package com.quangcd.tripmate.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Date;
-
 @Entity
 @Table(name = "messages")
 @Data

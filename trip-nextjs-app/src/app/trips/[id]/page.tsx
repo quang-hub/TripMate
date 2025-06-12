@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
 import Image from "next/image"
-import { CalendarDays, ChevronLeft, MapPin, Users, Clock, DollarSign, FileText } from "lucide-react"
+import { CalendarDays, ChevronLeft, MapPin, Users, Clock, DollarSign, FileText, MessageCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -11,6 +11,7 @@ import { ItineraryTab } from "@/components/itinerary-tab"
 import { ExpensesTab } from "@/components/expenses-tab"
 import { MembersTab } from "@/components/members-tab"
 import { DocumentsTab } from "@/components/documents-tab"
+import { ChatTab } from "@/components/chat-tab"
 
 export default function TripDetails({ params }: { params: { id: string } }) {
   // In a real app, fetch trip data based on params.id
@@ -84,7 +85,7 @@ export default function TripDetails({ params }: { params: { id: string } }) {
           <p className="text-muted-foreground mb-6">{trip.description}</p>
 
           <Tabs defaultValue="itinerary" className="w-full">
-            <TabsList className="grid grid-cols-4 mb-6">
+            <TabsList className="grid grid-cols-5 mb-6">
               <TabsTrigger value="itinerary">
                 <Clock className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Itinerary</span>
@@ -101,6 +102,10 @@ export default function TripDetails({ params }: { params: { id: string } }) {
                 <FileText className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Documents</span>
               </TabsTrigger>
+              <TabsTrigger value="chat">
+                <MessageCircle className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Chat</span>
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="itinerary">
               <ItineraryTab tripId={trip.id} />
@@ -113,6 +118,9 @@ export default function TripDetails({ params }: { params: { id: string } }) {
             </TabsContent>
             <TabsContent value="documents">
               <DocumentsTab tripId={trip.id} />
+            </TabsContent>
+            <TabsContent value="chat">
+              <ChatTab tripId={trip.id} />
             </TabsContent>
           </Tabs>
         </div>
