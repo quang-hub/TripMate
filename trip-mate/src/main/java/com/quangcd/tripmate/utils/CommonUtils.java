@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.security.SecureRandom;
 
 import java.io.File;
@@ -43,7 +44,21 @@ public class CommonUtils {
             throw new ResourceNotFoundException(
                     Translator.toLocale("common.error"));
         }
-        String fileName = "user_" + new Date().getTime() + getRandomNumber(4)
+        String fileName = target + "_" + new Date().getTime() + getRandomNumber(4)
+                + "." + FilenameUtils.getExtension(image.getOriginalFilename());
+        File newFile = new File(baseFolder + File.separator + target + File.separator + fileName);
+        image.transferTo(newFile);
+        return baseUpload + File.separator + target + File.separator + fileName;
+    }
+
+    public static String saveFile(MultipartFile image, String baseUpload, String baseFolder, String target) throws IOException {
+
+        File uploadImagePath = new File(baseFolder + File.separator + target);
+        if (!uploadImagePath.exists()) {
+            log.warn("Upload path does not exist: {} \ncreating new one", baseFolder + File.separator + target);
+            uploadImagePath.mkdir();
+        }
+        String fileName = target + "_" + new Date().getTime() + getRandomNumber(4)
                 + "." + FilenameUtils.getExtension(image.getOriginalFilename());
         File newFile = new File(baseFolder + File.separator + target + File.separator + fileName);
         image.transferTo(newFile);

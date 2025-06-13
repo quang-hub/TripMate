@@ -101,11 +101,10 @@ public class TripMemberServiceImpl implements TripMemberService {
 
     @Override
     public TripMember findByTripIdAndUserId(Long tripId, Long userId) {
-        TripMember tagetMember = tripMemberRepository.findByTripIdAndUserIdAndIsDeleted(
+        return tripMemberRepository.findByTripIdAndUserIdAndIsDeleted(
                         tripId, userId, false)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         Translator.toLocale("tripmember.error.trip_member_not_found")));
-        return tagetMember;
     }
 
     @Override
@@ -115,14 +114,14 @@ public class TripMemberServiceImpl implements TripMemberService {
         int memberCount = tripMemberRepository.countByTripIdAndIsDeleted(tripId, false);
         if (memberCount == 0) {
             throw new ResourceNotFoundException(
-                    Translator.toLocale("tripmember.error.trip.not_found")));
+                    Translator.toLocale("tripmember.error.trip.not_found"));
         }
         String status = trip.getEndDate().after(new Date()) ? "IMCOMPLETE" : "COMPLETE";
         if (trip.getStartDate().after(new Date())) {
             status = "NOT STARTED";
         }
 
-        TripDetailResponse response = TripDetailResponse.builder()
+        return TripDetailResponse.builder()
                 .tripId(trip.getId())
                 .name(trip.getName())
                 .description(trip.getDescription())
@@ -132,6 +131,5 @@ public class TripMemberServiceImpl implements TripMemberService {
                 .logoUrl(trip.getLogoUrl())
                 .status(status)
                 .build();
-        return response;
     }
 }
