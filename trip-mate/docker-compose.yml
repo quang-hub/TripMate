@@ -1,0 +1,48 @@
+
+services:
+  mariadb:
+    image: mariadb:11
+    container_name: mariadb-container1
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: 123456
+      MARIADB_DATABASE: trip_mate
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -u root -p123456 --silent"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+
+  spring-app:
+    build: .
+    container_name: spring-container
+    restart: on-failure:5
+    ports:
+      - "8080:8080"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    environment:
+      DBMS_CONNECTION: jdbc:mariadb://mariadb:3306/trip_mate?createDatabaseIfNotExist=true&connectTimeout=60000&socketTimeout=60000
+      DBMS_USERNAME: root
+      DBMS_PASSWORD: 123456
+      JWT_ACCESS_TOKEN: yFfSf0nXQMPlhC6Pwh/r9Wu5yK70zITx8uWK5nZEnQs=
+      JWT_REFRESH_TOKEN: X8KfWYXsl9X6QScahz3hPBrDJe7jXdcK9sJcfJIjn+k=
+      JWT_EXPIRATION_TIME_MINUTES: 60
+      JWT_EXPIRATION_TIME_DAYS: 7
+      BASE_DOMAIN_NAME: http://localhost:8080
+      BASE_DOMAIN_IMAGE: http://localhost:8080/images
+      BASE_UPLOAD_PATH: /uploads
+      STATIC_FOLDER: /static
+      MAIL_HOST: smtp.example.com
+      MAIL_PORT: 587
+      MAIL_USERNAME: thansajdav8@gmail.com
+      MAIL_PASSWORD: xchg ugbg spun hxuv
+
+volumes:
+  mariadb-data:
