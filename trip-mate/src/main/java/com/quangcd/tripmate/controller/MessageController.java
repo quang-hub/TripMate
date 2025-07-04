@@ -30,7 +30,7 @@ public class MessageController {
     private final AuthenticationService authenticationService;
 
     @PostMapping()
-    @Operation(summary = "get message for trip", description = "sendMessage for trip")
+    @Operation(summary = "send message for trip", description = "sendMessage for trip")
     public ResponseEntity<Object> sendMessage(@RequestBody MessageRequest request, Authentication authentication) {
         try {
             Long userId = authenticationService.extractUserId(authentication);
